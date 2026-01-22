@@ -9,7 +9,7 @@ import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
 export default function Dashboard() {
-  const { data } = useData();
+  const { data, mapping } = useData();
   const [location, setLocation] = useLocation();
   const dashboardRef = useRef<HTMLDivElement>(null);
 
@@ -39,15 +39,15 @@ export default function Dashboard() {
     // Helper to get count
     const count = data.length;
 
-    // Try to detect columns (case-insensitive)
+    // Use user-defined mapping or fallback to auto-detection
     const keys = Object.keys(data[0] || {});
     const findKey = (search: string) => keys.find(k => k.toLowerCase().includes(search.toLowerCase()));
 
-    const spendKey = findKey('spend') || findKey('cost') || 'Spend';
-    const leadsKey = findKey('leads') || 'Leads';
-    const quotesKey = findKey('quotes') || 'Quotes';
-    const salesKey = findKey('sales') || findKey('policies') || 'Sales';
-    const clicksKey = findKey('clicks') || 'Clicks';
+    const spendKey = mapping?.spend || findKey('spend') || findKey('cost') || 'Spend';
+    const leadsKey = mapping?.leads || findKey('leads') || 'Leads';
+    const quotesKey = mapping?.quotes || findKey('quotes') || 'Quotes';
+    const salesKey = mapping?.sales || findKey('sales') || findKey('policies') || 'Sales';
+    const clicksKey = mapping?.clicks || findKey('clicks') || 'Clicks';
 
     const totalSpend = sum(spendKey);
     const totalLeads = sum(leadsKey);

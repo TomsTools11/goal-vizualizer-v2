@@ -7,6 +7,7 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import { DataProvider } from "./contexts/DataContext";
 import Home from "./pages/Home";
 import Configure from "./pages/Configure";
+import MapColumns from "./pages/MapColumns";
 import Dashboard from "./pages/Dashboard";
 
 
@@ -14,6 +15,7 @@ function Router() {
   return (
     <Switch>
       <Route path={"/"} component={Home} />
+      <Route path={"/map-columns"} component={MapColumns} />
       <Route path={"/configure"} component={Configure} />
       <Route path={"/dashboard"} component={Dashboard} />
       <Route path={"/404"} component={NotFound} />

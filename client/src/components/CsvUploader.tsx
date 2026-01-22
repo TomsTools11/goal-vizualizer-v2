@@ -3,14 +3,15 @@ import Papa from 'papaparse';
 import { Upload, FileSpreadsheet, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { useData } from '@/contexts/DataContext';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
+import { useLocation } from 'wouter';
 
 interface CsvUploaderProps {
   onUploadComplete?: () => void;
 }
 
 export function CsvUploader({ onUploadComplete }: CsvUploaderProps) {
-  const { setData, setFileName } = useData();
+  const { setData, setFileName, setHeaders } = useData();
+  const [, setLocation] = useLocation();
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -45,9 +46,14 @@ export function CsvUploader({ onUploadComplete }: CsvUploaderProps) {
         } else {
           setData(results.data as any[]);
           setFileName(file.name);
+          if (results.meta.fields) {
+            setHeaders(results.meta.fields);
+          }
           if (onUploadComplete) {
             onUploadComplete();
           }
+          // Redirect to map columns page
+          setLocation('/map-columns');
         }
         setIsProcessing(false);
       },
@@ -57,7 +63,7 @@ export function CsvUploader({ onUploadComplete }: CsvUploaderProps) {
         setIsProcessing(false);
       }
     });
-  }, [setData, setFileName, onUploadComplete]);
+  }, [setData, setFileName, setHeaders, onUploadComplete, setLocation]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
