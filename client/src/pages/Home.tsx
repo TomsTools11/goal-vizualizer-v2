@@ -33,7 +33,7 @@ export default function Home() {
           {/* Hero Section */}
           <div className="text-center space-y-4">
             <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-foreground">
-              Transform Data into <span className="text-primary">Actionable Insights</span>
+              <span className="text-primary">GOAL</span> Data Visualizer
             </h1>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
               Upload your client CSV data to generate professional, on-brand visualizations instantly.
