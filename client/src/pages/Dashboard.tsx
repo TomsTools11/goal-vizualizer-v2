@@ -158,20 +158,28 @@ export default function Dashboard() {
           {/* Top KPI Row (Summary Multipliers) */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="bg-gradient-to-br from-blue-50 to-white p-6 rounded-xl border border-blue-100 text-center shadow-sm">
-              <div className="text-3xl font-bold text-primary mb-1">2.1x</div>
-              <div className="text-xs text-slate-500 font-medium uppercase">Higher Contact Rate</div>
+              <div className="text-3xl font-bold text-primary mb-1">
+                {metrics.contactRate.toFixed(1)}%
+              </div>
+              <div className="text-xs text-slate-500 font-medium uppercase">Contact Rate</div>
             </div>
             <div className="bg-gradient-to-br from-blue-50 to-white p-6 rounded-xl border border-blue-100 text-center shadow-sm">
-              <div className="text-3xl font-bold text-primary mb-1">3.0x</div>
-              <div className="text-xs text-slate-500 font-medium uppercase">Higher Quote Rate</div>
+              <div className="text-3xl font-bold text-primary mb-1">
+                {metrics.quoteRate.toFixed(1)}%
+              </div>
+              <div className="text-xs text-slate-500 font-medium uppercase">Quote Rate</div>
             </div>
             <div className="bg-gradient-to-br from-blue-50 to-white p-6 rounded-xl border border-blue-100 text-center shadow-sm">
-              <div className="text-3xl font-bold text-primary mb-1">2.5x</div>
-              <div className="text-xs text-slate-500 font-medium uppercase">Better Conversion</div>
+              <div className="text-3xl font-bold text-primary mb-1">
+                {metrics.leadToSale.toFixed(1)}%
+              </div>
+              <div className="text-xs text-slate-500 font-medium uppercase">Lead → Sale Rate</div>
             </div>
             <div className="bg-gradient-to-br from-blue-50 to-white p-6 rounded-xl border border-blue-100 text-center shadow-sm">
-              <div className="text-3xl font-bold text-slate-900 mb-1">52 vs 97</div>
-              <div className="text-xs text-slate-500 font-medium uppercase">Sales (Us vs All 4)</div>
+              <div className="text-3xl font-bold text-slate-900 mb-1">
+                {metrics.totalSales}
+              </div>
+              <div className="text-xs text-slate-500 font-medium uppercase">Total Sales</div>
             </div>
           </div>
 
@@ -197,10 +205,10 @@ export default function Dashboard() {
             {/* Contact Rate Chart */}
             <HorizontalBarChart 
               title="Contact Rate"
-              subtitle="2.1x better"
+              subtitle="Performance"
               valueSuffix="%"
               data={[
-                { label: 'Goal Leads', value: 30.1, isPrimary: true, formattedValue: '30.1%' },
+                { label: 'Goal Leads', value: metrics.contactRate, isPrimary: true, formattedValue: `${metrics.contactRate.toFixed(1)}%` },
                 { label: 'QuoteWizard', value: 21.7, formattedValue: '21.7%' },
                 { label: 'QuoteNerds', value: 17.9, formattedValue: '17.9%' },
                 { label: 'Smart Financial', value: 15.5, formattedValue: '15.5%' },
@@ -211,10 +219,10 @@ export default function Dashboard() {
             {/* Quote Rate Chart */}
             <HorizontalBarChart 
               title="Quote Rate"
-              subtitle="3.0x better"
+              subtitle="Performance"
               valueSuffix="%"
               data={[
-                { label: 'Goal Leads', value: 17.5, isPrimary: true, formattedValue: '17.5%' },
+                { label: 'Goal Leads', value: metrics.quoteRate, isPrimary: true, formattedValue: `${metrics.quoteRate.toFixed(1)}%` },
                 { label: 'Smart Financial', value: 8.4, formattedValue: '8.4%' },
                 { label: 'QuoteNerds', value: 6.5, formattedValue: '6.5%' },
                 { label: 'QuoteWizard', value: 6.1, formattedValue: '6.1%' },
@@ -225,10 +233,10 @@ export default function Dashboard() {
             {/* Lead -> Sale Chart */}
             <HorizontalBarChart 
               title="Lead → Sale"
-              subtitle="2.5x better"
+              subtitle="Performance"
               valueSuffix="%"
               data={[
-                { label: 'Goal Leads', value: 2.6, isPrimary: true, formattedValue: '2.6%' },
+                { label: 'Goal Leads', value: metrics.leadToSale, isPrimary: true, formattedValue: `${metrics.leadToSale.toFixed(1)}%` },
                 { label: 'Smart Financial', value: 1.8, formattedValue: '1.8%' },
                 { label: 'QuoteNerds', value: 1.4, formattedValue: '1.4%' },
                 { label: 'Everquote', value: 0.6, formattedValue: '0.6%' },
@@ -239,10 +247,10 @@ export default function Dashboard() {
             {/* Total Sales Chart */}
             <HorizontalBarChart 
               title="Total Sales"
-              subtitle="2.1x better"
+              subtitle="Performance"
               data={[
+                { label: 'Goal Leads', value: metrics.totalSales, isPrimary: true, formattedValue: metrics.totalSales.toString() },
                 { label: 'QuoteNerds', value: 56, formattedValue: '56' },
-                { label: 'Goal Leads', value: 52, isPrimary: true, formattedValue: '52' },
                 { label: 'Smart Financial', value: 33, formattedValue: '33' },
                 { label: 'Everquote', value: 6, formattedValue: '6' },
                 { label: 'QuoteWizard', value: 2, formattedValue: '2' },
@@ -255,12 +263,12 @@ export default function Dashboard() {
             <div className="space-y-2">
               <h3 className="text-lg font-bold text-slate-900">The Bottom Line</h3>
               <p className="text-slate-600">
-                Goal Leads delivers <span className="font-bold text-teal-600">2.6% lead-to-sale conversion</span> — that's <span className="font-bold text-teal-600">2.8x better</span> than the competitor average of 0.93%.
+                Goal Leads delivers <span className="font-bold text-teal-600">{metrics.leadToSale.toFixed(1)}% lead-to-sale conversion</span>.
               </p>
             </div>
             <div className="bg-teal-50 text-teal-700 px-6 py-4 rounded-lg text-center min-w-[160px]">
-              <div className="text-3xl font-bold">2.6%</div>
-              <div className="text-xs font-bold uppercase tracking-wider">Best Conversion</div>
+              <div className="text-3xl font-bold">{metrics.leadToSale.toFixed(1)}%</div>
+              <div className="text-xs font-bold uppercase tracking-wider">Conversion Rate</div>
             </div>
           </div>
 
