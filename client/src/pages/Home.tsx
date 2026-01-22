@@ -2,12 +2,22 @@ import React from 'react';
 import { CsvUploader } from '@/components/CsvUploader';
 import { useData } from '@/contexts/DataContext';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, BarChart3 } from 'lucide-react';
+import { ArrowRight, BarChart3, FileSpreadsheet } from 'lucide-react';
 import { useLocation } from 'wouter';
 
 export default function Home() {
-  const { data, fileName } = useData();
+  const { data, fileName, setData, setFileName } = useData();
   const [, setLocation] = useLocation();
+
+  const handleLoadSample = () => {
+    const sampleData = [
+      { Campaign: 'Home Leads', Spend: 22011.61, Leads: 1031, Quotes: 250, Sales: 27, Clicks: 1758 },
+      { Campaign: 'Auto Leads', Spend: 15400.00, Leads: 850, Quotes: 180, Sales: 15, Clicks: 1200 },
+      { Campaign: 'Life Leads', Spend: 8500.50, Leads: 400, Quotes: 90, Sales: 8, Clicks: 650 },
+    ];
+    setData(sampleData);
+    setFileName('sample-data.csv');
+  };
 
   const handleUploadComplete = () => {
     // In a real app, we might want to show a success message or auto-navigate
@@ -42,6 +52,12 @@ export default function Home() {
 
           {/* Upload Section */}
           <div className="space-y-8">
+            <div className="flex justify-end">
+              <Button variant="outline" size="sm" onClick={handleLoadSample} className="gap-2">
+                <FileSpreadsheet className="w-4 h-4" />
+                Load Sample Data
+              </Button>
+            </div>
             <CsvUploader onUploadComplete={handleUploadComplete} />
 
             {/* Success State / Next Steps */}
