@@ -1,54 +1,34 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
+import type { RawRow, ColumnMapping } from '@/types';
 
-export interface DataRow {
-  [key: string]: string | number | boolean | null;
-}
-
-export interface ColumnMapping {
-  spend: string;
-  leads: string;
-  quotes: string;
-  sales: string;
-  clicks: string;
-}
+// Re-export for backwards compatibility
+export type DataRow = RawRow;
 
 export interface DataContextType {
-  data: DataRow[];
-  setData: (data: DataRow[]) => void;
+  data: RawRow[];
+  setData: (data: RawRow[]) => void;
   fileName: string | null;
   setFileName: (name: string | null) => void;
   headers: string[];
   setHeaders: (headers: string[]) => void;
-  mapping: ColumnMapping;
-  setMapping: (mapping: ColumnMapping) => void;
+  mapping: Partial<ColumnMapping>;
+  setMapping: (mapping: Partial<ColumnMapping>) => void;
   resetData: () => void;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export function DataProvider({ children }: { children: ReactNode }) {
-  const [data, setData] = useState<DataRow[]>([]);
+  const [data, setData] = useState<RawRow[]>([]);
   const [fileName, setFileName] = useState<string | null>(null);
   const [headers, setHeaders] = useState<string[]>([]);
-  const [mapping, setMapping] = useState<ColumnMapping>({
-    spend: '',
-    leads: '',
-    quotes: '',
-    sales: '',
-    clicks: ''
-  });
+  const [mapping, setMapping] = useState<Partial<ColumnMapping>>({});
 
   const resetData = () => {
     setData([]);
     setFileName(null);
     setHeaders([]);
-    setMapping({
-      spend: '',
-      leads: '',
-      quotes: '',
-      sales: '',
-      clicks: ''
-    });
+    setMapping({});
   };
 
   return (

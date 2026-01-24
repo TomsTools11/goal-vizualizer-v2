@@ -1,0 +1,15 @@
+Metric,Calculation Method,Definition
+(CTR) Click-Through Rate,(Total Clicks / Total Impressions) x100,The percentage of times an ad was clicked relative to how many times it was shown (impressions).
+(CR) Contact Rate,"(Leads Contacted / Total Leads) * 100,","The percentage of leads with whom the agent or sales team successfully makes contact,."
+(CVR) Conversion Rate (Click-to-Lead),(Leads / Clicks) x 100.,"The percentage of consumers who clicked on an ad and successfully completed the form to become a lead. The ""floor"" for this metric is typically expected to be around 50%."
+(CPA) Cost Per Acquisition,"Total Spend / Total Sales (e.g., $32,876 spend / 40 sales = ~$821 CPA).","The specific cost incurred to generate a single sale or write a household. This is described as the ""number one metric"" and ""end-all-be-all"" for measuring success, as opposed to vanity metrics like CPL."
+(CPC) Cost Per Click,Total Spend / Total Clicks.,"The amount paid for each individual click on an ad unit. This serves as the ""entry point"" cost before a lead is generated."
+(CPI) Cost Per Item,"Total Spend / Total Number of Policy Items Sold,","The cost to acquire a specific policy ""item"" (e.g., an auto policy vs. a home policy) within a household."
+(CPL) Cost Per Lead,Total Spend / Total Leads (Alternatively: CPC / Click-to-Lead Conversion Rate).,"The average cost to generate one lead. It is frequently referred to as a ""vanity metric"" because a low CPL does not guarantee profitability if the leads do not convert to sales."
+Inbound Call Rate,(Calls / Leads) x 100.,The percentage of leads that result in the consumer clicking to call the agency directly. The average is typically around 10%.
+(LTV) Lifetime Value,[Annual Revenue x Gross Margin x Expected Duration] / Acquisition Cost,The total revenue a business can expect from a single customer account over the life of the relationship.
+(QR) Quote Rate (or Lead-to-Quote),(Total Quotes / Total Leads) x 100,"The percentage of leads that result in the agent providing a price quote,."
+(QTC) Quote-to-Close (or Quote-to-Bind),"(Total Sales / Total Quotes) * 100,,",The percentage of quoted prospects that ultimately purchase a policy.
+(ROAS) Return on Ad Spend,"Total Premium Generated / Total Ad Spend (Goal ideal is 5:1),",A metric used to measure the gross revenue generated for every dollar spent on advertising.
+Sales Rate (Click-to-Close),(Sales / Clicks) x 100.,The percentage of clicks that result in a sale. This is sometimes used in high-level dashboard analysis to measure funnel efficiency from the very top.
+(SR) Sales Rate (or Close Rate),"(Total Sales / Total Leads) * 100,,","The percentage of generated leads that result in a sold policy or bound household,."

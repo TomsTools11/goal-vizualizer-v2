@@ -8,6 +8,7 @@ interface DataPoint {
   isPrimary?: boolean;
   subLabel?: string;
   formattedValue?: string;
+  color?: string; // Optional custom color
 }
 
 interface HorizontalBarChartProps {
@@ -17,8 +18,14 @@ interface HorizontalBarChartProps {
   valuePrefix?: string;
   valueSuffix?: string;
   className?: string;
-  highlightColor?: string; // Default is GOAL blue
+  colorScheme?: 'alternating' | 'highlight-only'; // 'alternating' cycles colors, 'highlight-only' uses gray for non-primary
 }
+
+// GOAL brand colors for bars
+const BAR_COLORS = [
+  'bg-[#1E88E5]', // GOAL Blue
+  'bg-[#0D9488]', // Teal/Green accent
+];
 
 export function HorizontalBarChart({ 
   title, 
@@ -27,11 +34,31 @@ export function HorizontalBarChart({
   valuePrefix = '', 
   valueSuffix = '', 
   className,
-  highlightColor = 'bg-primary'
+  colorScheme = 'alternating'
 }: HorizontalBarChartProps) {
   
   // Find max value for scaling
   const maxValue = Math.max(...data.map(d => d.value));
+
+  // Get bar color based on index and whether it's primary
+  const getBarColor = (index: number, isPrimary?: boolean) => {
+    if (colorScheme === 'highlight-only') {
+      return isPrimary ? BAR_COLORS[0] : 'bg-slate-300';
+    }
+    // Alternating: use color palette, primary always gets first color
+    if (isPrimary) return BAR_COLORS[0];
+    return BAR_COLORS[index % BAR_COLORS.length];
+  };
+
+  // Get text color for value based on bar color
+  const getValueColor = (index: number, isPrimary?: boolean) => {
+    if (isPrimary) return 'text-[#1E88E5]';
+    if (colorScheme === 'alternating') {
+      const colorIndex = index % BAR_COLORS.length;
+      return colorIndex === 0 ? 'text-[#1E88E5]' : 'text-[#0D9488]';
+    }
+    return 'text-muted-foreground';
+  };
 
   return (
     <Card className={cn("border-none shadow-sm bg-white", className)}>
@@ -49,6 +76,8 @@ export function HorizontalBarChart({
         {data.map((item, index) => {
           const percentage = (item.value / maxValue) * 100;
           const isPrimary = item.isPrimary;
+          const barColor = item.color || getBarColor(index, isPrimary);
+          const valueColor = getValueColor(index, isPrimary);
           
           return (
             <div key={index} className="space-y-1.5">
@@ -66,10 +95,7 @@ export function HorizontalBarChart({
                     <span className="text-muted-foreground text-xs">({item.subLabel})</span>
                   )}
                 </div>
-                <span className={cn(
-                  "font-bold tabular-nums", 
-                  isPrimary ? "text-primary" : "text-muted-foreground"
-                )}>
+                <span className={cn("font-bold tabular-nums", valueColor)}>
                   {item.formattedValue || `${valuePrefix}${item.value.toLocaleString()}${valueSuffix}`}
                 </span>
               </div>
@@ -79,7 +105,7 @@ export function HorizontalBarChart({
                 <div 
                   className={cn(
                     "h-full rounded-full transition-all duration-1000 ease-out",
-                    isPrimary ? highlightColor : "bg-slate-300"
+                    barColor
                   )}
                   style={{ width: `${percentage}%` }}
                 />

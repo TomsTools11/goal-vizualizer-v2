@@ -1,16 +1,26 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
-import { useData, ColumnMapping } from '@/contexts/DataContext';
+import { useData } from '@/contexts/DataContext';
+import type { ColumnMapping } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { ArrowRight, ArrowLeft } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { ArrowRight, ArrowLeft, AlertCircle } from 'lucide-react';
+import { 
+  autoDetectColumns, 
+  validateRequiredFields, 
+  getFieldLabel, 
+  getFieldDescription, 
+  isRequiredField,
+  getMappingFieldsInOrder 
+} from '@/utils/columnMapping';
 
 export default function MapColumns() {
   const { data, headers, mapping, setMapping } = useData();
   const [, setLocation] = useLocation();
-  const [localMapping, setLocalMapping] = useState<ColumnMapping>(mapping);
+  const [localMapping, setLocalMapping] = useState<Partial<ColumnMapping>>(mapping);
 
   // Redirect if no data
   useEffect(() => {
@@ -21,30 +31,25 @@ export default function MapColumns() {
 
   // Auto-detect columns on load
   useEffect(() => {
-    const newMapping = { ...mapping };
-    const findKey = (search: string) => headers.find(h => h.toLowerCase().includes(search.toLowerCase())) || '';
-
-    if (!newMapping.spend) newMapping.spend = findKey('spend') || findKey('cost');
-    if (!newMapping.leads) newMapping.leads = findKey('leads');
-    if (!newMapping.quotes) newMapping.quotes = findKey('quotes');
-    if (!newMapping.sales) newMapping.sales = findKey('sales') || findKey('policies');
-    if (!newMapping.clicks) newMapping.clicks = findKey('clicks');
-
-    setLocalMapping(newMapping);
+    if (headers.length > 0 && Object.keys(localMapping).length === 0) {
+      const detected = autoDetectColumns(headers);
+      setLocalMapping(detected);
+    }
   }, [headers]);
 
   const handleSave = () => {
+    const validation = validateRequiredFields(localMapping);
+    if (!validation.valid) {
+      // Validation will be shown in UI
+      return;
+    }
     setMapping(localMapping);
     setLocation('/configure');
   };
 
-  const fields = [
-    { key: 'spend', label: 'Total Spend / Cost', required: true },
-    { key: 'leads', label: 'Total Leads', required: true },
-    { key: 'quotes', label: 'Total Quotes', required: true },
-    { key: 'sales', label: 'Total Sales / Policies', required: true },
-    { key: 'clicks', label: 'Total Clicks', required: false },
-  ] as const;
+  const fields = getMappingFieldsInOrder();
+  const validation = validateRequiredFields(localMapping);
+  const canContinue = validation.valid;
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
@@ -72,33 +77,83 @@ export default function MapColumns() {
             <CardHeader>
               <CardTitle>Column Mapping</CardTitle>
               <CardDescription>
-                Select the corresponding column from your file for each metric.
+                Map your CSV columns to the required fields. Required fields are marked with *
               </CardDescription>
+              {!canContinue && (
+                <div className="mt-4 p-3 rounded-lg bg-red-50 border border-red-200 flex items-start gap-2">
+                  <AlertCircle className="w-5 h-5 text-red-600 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-red-900">Missing required fields</p>
+                    <p className="text-sm text-red-700 mt-1">
+                      Please map: {validation.missingFields.map(f => getFieldLabel(f)).join(', ')}
+                    </p>
+                  </div>
+                </div>
+              )}
             </CardHeader>
             <CardContent className="space-y-6">
-              {fields.map((field) => (
-                <div key={field.key} className="grid gap-2">
-                  <Label htmlFor={field.key} className="flex items-center gap-1">
-                    {field.label}
-                    {field.required && <span className="text-red-500">*</span>}
-                  </Label>
-                  <Select
-                    value={localMapping[field.key as keyof ColumnMapping]}
-                    onValueChange={(val) => setLocalMapping(prev => ({ ...prev, [field.key]: val }))}
-                  >
-                    <SelectTrigger id={field.key}>
-                      <SelectValue placeholder="Select a column..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {headers.map((header) => (
-                        <SelectItem key={header} value={header}>
-                          {header}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              ))}
+              {/* Required fields */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  Required Fields
+                  <Badge variant="outline" className="text-xs">Must be mapped</Badge>
+                </h3>
+                {fields.filter(f => isRequiredField(f)).map((field) => (
+                  <div key={field} className="grid gap-2">
+                    <Label htmlFor={field} className="flex items-center gap-1">
+                      {getFieldLabel(field)}
+                      <span className="text-red-500">*</span>
+                    </Label>
+                    <p className="text-xs text-muted-foreground">{getFieldDescription(field)}</p>
+                    <Select
+                      value={localMapping[field] || '__none__'}
+                      onValueChange={(val) => setLocalMapping(prev => ({ ...prev, [field]: val === '__none__' ? '' : val }))}
+                    >
+                      <SelectTrigger id={field}>
+                        <SelectValue placeholder="Select a column..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__">-- None --</SelectItem>
+                        {headers.map((header) => (
+                          <SelectItem key={header} value={header}>
+                            {header}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                ))}
+              </div>
+              
+              {/* Optional fields */}
+              <div className="space-y-4 pt-4 border-t">
+                <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  Optional Fields
+                  <Badge variant="outline" className="text-xs bg-slate-50">Enable additional metrics</Badge>
+                </h3>
+                {fields.filter(f => !isRequiredField(f)).map((field) => (
+                  <div key={field} className="grid gap-2">
+                    <Label htmlFor={field}>{getFieldLabel(field)}</Label>
+                    <p className="text-xs text-muted-foreground">{getFieldDescription(field)}</p>
+                    <Select
+                      value={localMapping[field] || '__none__'}
+                      onValueChange={(val) => setLocalMapping(prev => ({ ...prev, [field]: val === '__none__' ? '' : val }))}
+                    >
+                      <SelectTrigger id={field}>
+                        <SelectValue placeholder="Select a column (optional)..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__">-- None --</SelectItem>
+                        {headers.map((header) => (
+                          <SelectItem key={header} value={header}>
+                            {header}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                ))}
+              </div>
             </CardContent>
           </Card>
 
@@ -110,9 +165,9 @@ export default function MapColumns() {
             <Button 
               onClick={handleSave} 
               className="gap-2 bg-blue-600 hover:bg-blue-700 text-white"
-              disabled={!localMapping.spend || !localMapping.leads || !localMapping.quotes || !localMapping.sales}
+              disabled={!canContinue}
             >
-              Continue
+              Continue to Configuration
               <ArrowRight className="w-4 h-4" />
             </Button>
           </div>
