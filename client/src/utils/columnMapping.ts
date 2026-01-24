@@ -22,21 +22,42 @@ const COLUMN_PATTERNS: Record<keyof ColumnMapping, string[]> = {
   policyItems: ['policy items sold', 'policy items', 'items sold', 'policies sold', 'item count'],
   premium: ['total premium', 'premium generated', 'premium', 'total revenue', 'revenue'],
   date: ['date', 'day', 'week', 'month', 'period', 'time', 'timestamp'],
+  // Pre-calculated CPA columns - detected separately (not excluded)
+  quoteCpa: ['quote cpa', 'cpq', 'cost per quote'],
+  policyCpa: ['policy cpa', 'cpa', 'cost per acquisition', 'cost per sale', 'cost per policy'],
 };
 
 /**
- * Patterns to EXCLUDE from matching (these are derived metrics, not raw data)
+ * Patterns to EXCLUDE from matching raw count fields (these are derived metrics)
  * Case-insensitive check
+ * Note: CPA columns are handled separately via quoteCpa and policyCpa fields
  */
 const EXCLUDE_PATTERNS = [
-  'cvr', 'cpa', 'cpl', 'cpc', 'cpi', 'rate', 'ratio', '%', 'percent', 'conversion',
+  'cvr', 'cpl', 'cpc', 'cpi', 'rate', 'ratio', '%', 'percent', 'conversion',
 ];
 
 /**
- * Check if a header should be excluded (it's a derived metric, not raw data)
+ * CPA patterns - these should be detected for quoteCpa/policyCpa but excluded from other fields
  */
-function shouldExcludeHeader(header: string): boolean {
+const CPA_PATTERNS = ['cpa', 'cpq', 'cost per'];
+
+/**
+ * Check if a header should be excluded from raw count fields
+ * (it's a derived metric, not raw data)
+ */
+function shouldExcludeHeader(header: string, field: keyof ColumnMapping): boolean {
   const lower = header.toLowerCase();
+  
+  // CPA fields should match CPA patterns, not be excluded
+  if (field === 'quoteCpa' || field === 'policyCpa') {
+    return false;
+  }
+  
+  // For non-CPA fields, exclude headers that contain CPA patterns
+  if (CPA_PATTERNS.some(pattern => lower.includes(pattern))) {
+    return true;
+  }
+  
   return EXCLUDE_PATTERNS.some(pattern => lower.includes(pattern));
 }
 
@@ -52,13 +73,13 @@ export function autoDetectColumns(headers: string[]): Partial<ColumnMapping> {
   (Object.keys(COLUMN_PATTERNS) as (keyof ColumnMapping)[]).forEach(field => {
     const patterns = COLUMN_PATTERNS[field];
     
-    // Try exact match first (excluding derived metrics)
+    // Try exact match first (excluding derived metrics unless it's a CPA field)
     for (const pattern of patterns) {
       const index = headers.findIndex((h, i) => {
         const lower = h.toLowerCase().trim();
         return lower === pattern && 
                !usedHeaders.has(h) && 
-               !shouldExcludeHeader(h);
+               !shouldExcludeHeader(h, field);
       });
       if (index !== -1) {
         mapping[field] = headers[index];
@@ -74,7 +95,7 @@ export function autoDetectColumns(headers: string[]): Partial<ColumnMapping> {
         // Check that the header contains the pattern but isn't a derived metric
         return lower.includes(pattern) && 
                !usedHeaders.has(h) && 
-               !shouldExcludeHeader(h);
+               !shouldExcludeHeader(h, field);
       });
       if (index !== -1) {
         mapping[field] = headers[index];
@@ -126,6 +147,8 @@ export function getFieldLabel(field: keyof ColumnMapping): string {
     policyItems: 'Policy Items Sold',
     premium: 'Total Premium Generated',
     date: 'Date',
+    quoteCpa: 'Quote CPA (Pre-calculated)',
+    policyCpa: 'Policy CPA (Pre-calculated)',
   };
   
   return labels[field];
@@ -155,6 +178,8 @@ export function getFieldDescription(field: keyof ColumnMapping): string {
     policyItems: 'Number of individual policy items sold (optional, enables CPI metric)',
     premium: 'Total premium generated (optional, enables ROAS metric)',
     date: 'Date column for time-series grouping (optional)',
+    quoteCpa: 'Pre-calculated cost per quote from CSV (optional, overrides calculated CPQ)',
+    policyCpa: 'Pre-calculated cost per acquisition from CSV (optional, overrides calculated CPA)',
   };
   
   return descriptions[field];

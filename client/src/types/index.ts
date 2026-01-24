@@ -38,6 +38,10 @@ export interface ColumnMapping {
   policyItems?: string;    // Policy Items Sold, Policies Sold, Items Sold
   premium?: string;        // Premium, Total Premium, Premium Generated
   date?: string;           // Date, Day, Week, Month
+  
+  // Pre-calculated CPA columns (use these values instead of calculating)
+  quoteCpa?: string;       // Quote CPA, CPQ - pre-calculated cost per quote
+  policyCpa?: string;      // Policy CPA, CPA - pre-calculated cost per acquisition
 }
 
 // ============================================================================
@@ -64,6 +68,10 @@ export interface NormalizedRow {
   policyItems?: number;
   premium?: number;
   date?: Date;
+  
+  // Pre-calculated CPA values
+  quoteCpa?: number;
+  policyCpa?: number;
 }
 
 // ============================================================================

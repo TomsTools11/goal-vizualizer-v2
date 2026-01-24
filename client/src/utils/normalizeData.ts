@@ -36,6 +36,10 @@ export function normalizeRow(
   const policyItems = mapping.policyItems ? parseNumeric(row[mapping.policyItems]) : undefined;
   const premium = mapping.premium ? parseNumeric(row[mapping.premium]) : undefined;
   
+  // Parse pre-calculated CPA fields
+  const quoteCpa = mapping.quoteCpa ? parseNumeric(row[mapping.quoteCpa]) : undefined;
+  const policyCpa = mapping.policyCpa ? parseNumeric(row[mapping.policyCpa]) : undefined;
+  
   // Parse date if present
   let date: Date | undefined;
   if (mapping.date) {
@@ -61,6 +65,8 @@ export function normalizeRow(
     ...(policyItems !== undefined && { policyItems }),
     ...(premium !== undefined && { premium }),
     ...(date && { date }),
+    ...(quoteCpa !== undefined && { quoteCpa }),
+    ...(policyCpa !== undefined && { policyCpa }),
   };
 }
 

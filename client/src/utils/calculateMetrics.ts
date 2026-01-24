@@ -13,7 +13,7 @@ export function calculateEntityMetrics(
   entity: string,
   rows: NormalizedRow[]
 ): EntityMetrics {
-  // Aggregate base totals
+  // Aggregate base totals and pre-calculated CPA values
   const totals = rows.reduce(
     (acc, row) => ({
       spend: acc.spend + row.spend,
@@ -26,6 +26,11 @@ export function calculateEntityMetrics(
       calls: acc.calls + (row.calls ?? 0),
       policyItems: acc.policyItems + (row.policyItems ?? 0),
       premium: acc.premium + (row.premium ?? 0),
+      // Sum of pre-calculated CPAs (will be averaged later)
+      quoteCpaSum: acc.quoteCpaSum + (row.quoteCpa ?? 0),
+      quoteCpaCount: acc.quoteCpaCount + (row.quoteCpa !== undefined ? 1 : 0),
+      policyCpaSum: acc.policyCpaSum + (row.policyCpa ?? 0),
+      policyCpaCount: acc.policyCpaCount + (row.policyCpa !== undefined ? 1 : 0),
     }),
     {
       spend: 0,
@@ -38,13 +43,27 @@ export function calculateEntityMetrics(
       calls: 0,
       policyItems: 0,
       premium: 0,
+      quoteCpaSum: 0,
+      quoteCpaCount: 0,
+      policyCpaSum: 0,
+      policyCpaCount: 0,
     }
   );
 
   // Calculate derived cost metrics
+  // Use pre-calculated CPA values if available, otherwise calculate from totals
   const cpl = safeDivide(totals.spend, totals.leads);
-  const cpq = safeDivide(totals.spend, totals.quotes);
-  const cpa = safeDivide(totals.spend, totals.sales);
+  
+  // For CPQ: use pre-calculated average if available, else calculate
+  const cpq = totals.quoteCpaCount > 0 
+    ? safeDivide(totals.quoteCpaSum, totals.quoteCpaCount)
+    : safeDivide(totals.spend, totals.quotes);
+  
+  // For CPA: use pre-calculated average if available, else calculate
+  const cpa = totals.policyCpaCount > 0 
+    ? safeDivide(totals.policyCpaSum, totals.policyCpaCount)
+    : safeDivide(totals.spend, totals.sales);
+  
   const cpi = totals.policyItems > 0 ? safeDivide(totals.spend, totals.policyItems) : undefined;
   const cpc = totals.clicks > 0 ? safeDivide(totals.spend, totals.clicks) : undefined;
 
