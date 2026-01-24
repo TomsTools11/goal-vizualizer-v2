@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useLocation } from 'wouter';
 import { useData } from '@/contexts/DataContext';
-import type { MetricId, ReportConfig } from '@/types';
+import type { MetricId, ReportConfig, ColumnMapping } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { ArrowLeft, ArrowRight, Lightbulb, Check } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ArrowLeft, ArrowRight, Lightbulb, Check, FileSpreadsheet, Copy } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { METRIC_DEFINITIONS, canCalculateMetric } from '@/constants/metricDefinitions';
 import { autoDetectColumns } from '@/utils/columnMapping';
@@ -56,35 +57,75 @@ const DERIVED_METRICS: Array<{ id: MetricId; label: string }> = [
 ];
 
 export default function ConfigureNew() {
-  const { data, headers, mapping, setMapping } = useData();
+  const { 
+    data, 
+    headers, 
+    mapping, 
+    setMapping,
+    uploadedFiles,
+    multiFileMode,
+    updateFileMapping 
+  } = useData();
   const [, setLocation] = useLocation();
+  const [activeFileTab, setActiveFileTab] = useState<string>(uploadedFiles[0]?.id ?? '');
 
-  // Auto-detect and set mapping on load
+  // Auto-detect and set mapping on load (for merge mode or single file)
   useEffect(() => {
-    if (headers.length > 0) {
-      const detected = autoDetectColumns(headers);
-      setMapping(detected);
+    if (multiFileMode === 'merge' || uploadedFiles.length === 1) {
+      if (headers.length > 0 && Object.keys(mapping).length === 0) {
+        const detected = autoDetectColumns(headers);
+        setMapping(detected);
+      }
     }
-  }, [headers, setMapping]);
+  }, [headers, mapping, setMapping, multiFileMode, uploadedFiles.length]);
 
   // Redirect if no data
   useEffect(() => {
-    if (data.length === 0) {
+    if (uploadedFiles.length === 0) {
       setLocation('/');
     }
-  }, [data, setLocation]);
+  }, [uploadedFiles.length, setLocation]);
+  
+  // Set initial active tab
+  useEffect(() => {
+    if (uploadedFiles.length > 0 && !activeFileTab) {
+      setActiveFileTab(uploadedFiles[0].id);
+    }
+  }, [uploadedFiles, activeFileTab]);
+
+  const isCompareMode = multiFileMode === 'compare' && uploadedFiles.length > 1;
 
   // State
   const [comparisonContext, setComparisonContext] = useState<ComparisonContext>('single');
   const [selectedBaseMetrics, setSelectedBaseMetrics] = useState<string[]>([]);
   const [selectedDerivedMetrics, setSelectedDerivedMetrics] = useState<MetricId[]>([]);
 
+  // Get the effective mapping for calculations (uses first file's mapping in compare mode)
+  const effectiveMapping = useMemo(() => {
+    if (isCompareMode && uploadedFiles.length > 0) {
+      return uploadedFiles[0].mapping;
+    }
+    return mapping;
+  }, [isCompareMode, uploadedFiles, mapping]);
+
   // Normalize data and check what's available
-  const normalizedData = useMemo(() => normalizeData(data, mapping), [data, mapping]);
+  const normalizedData = useMemo(() => normalizeData(data, effectiveMapping), [data, effectiveMapping]);
   const { global, entities } = useMemo(() => calculateAllMetrics(normalizedData), [normalizedData]);
   
   const entityCount = entities.length;
   const hasMultipleEntities = entityCount > 1;
+  
+  // Apply mapping from one file to all files (compare mode)
+  const applyMappingToAll = (sourceFileId: string) => {
+    const sourceFile = uploadedFiles.find(f => f.id === sourceFileId);
+    if (!sourceFile) return;
+    
+    uploadedFiles.forEach(file => {
+      if (file.id !== sourceFileId) {
+        updateFileMapping(file.id, sourceFile.mapping);
+      }
+    });
+  };
 
   // Determine which base metrics have data
   const availableBaseMetrics = useMemo(() => {
@@ -96,8 +137,8 @@ export default function ConfigureNew() {
 
   // Determine which derived metrics can be calculated
   const availableDerivedMetrics = useMemo(() => {
-    return DERIVED_METRICS.filter(m => canCalculateMetric(m.id, mapping));
-  }, [mapping]);
+    return DERIVED_METRICS.filter(m => canCalculateMetric(m.id, effectiveMapping));
+  }, [effectiveMapping]);
 
   // Auto-select metrics based on what's available
   useEffect(() => {
@@ -128,25 +169,26 @@ export default function ConfigureNew() {
   // Generate tips based on missing data
   const tips = useMemo(() => {
     const result: string[] = [];
+    const checkMapping = effectiveMapping;
     
-    if (!mapping.entity) {
+    if (!checkMapping.entity) {
       result.push('No entity/campaign column detected. Data will be shown as totals only.');
     }
-    if (!mapping.spend) {
+    if (!checkMapping.spend) {
       result.push('No spend column detected. Cost metrics won\'t be available.');
     }
-    if (!mapping.leads) {
+    if (!checkMapping.leads) {
       result.push('No leads column detected. Lead-based metrics won\'t be available.');
     }
-    if (!mapping.quotes) {
+    if (!checkMapping.quotes) {
       result.push('No quotes column detected. Quote rate metrics won\'t be available.');
     }
-    if (!mapping.sales) {
+    if (!checkMapping.sales) {
       result.push('No sales/policies column detected. Close rate and CPA won\'t be available.');
     }
     
     return result;
-  }, [mapping]);
+  }, [effectiveMapping]);
 
   const handleGenerate = () => {
     // Map comparison context to report type
@@ -166,6 +208,7 @@ export default function ConfigureNew() {
       reportType: config.reportType,
       metrics: config.focusMetrics.join(','),
       comparisonMode: config.comparisonMode,
+      multiFileMode: multiFileMode || 'merge',
     });
 
     setLocation(`/dashboard?${params.toString()}`);
@@ -205,11 +248,77 @@ export default function ConfigureNew() {
 
           {/* Data Summary */}
           <div className="text-sm text-muted-foreground">
-            Detected <span className="font-medium text-foreground">{data.length}</span> rows 
+            {uploadedFiles.length > 1 ? (
+              <>
+                <span className="font-medium text-foreground">{uploadedFiles.length} files</span> 
+                {' '}({multiFileMode === 'merge' ? 'merged' : 'comparing'}) with{' '}
+                <span className="font-medium text-foreground">{data.length.toLocaleString()}</span> total rows
+              </>
+            ) : (
+              <>Detected <span className="font-medium text-foreground">{data.length.toLocaleString()}</span> rows</>
+            )}
             {entityCount > 0 && (
               <> with <span className="font-medium text-foreground">{entityCount}</span> {entityCount === 1 ? 'entity' : 'entities'}</>
             )}
           </div>
+          
+          {/* Compare Mode: File Tabs for Mapping */}
+          {isCompareMode && (
+            <section className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-sm font-medium text-muted-foreground">Column Mapping by File</h2>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => applyMappingToAll(activeFileTab)}
+                  className="gap-2 text-xs"
+                >
+                  <Copy className="w-3 h-3" />
+                  Apply to All Files
+                </Button>
+              </div>
+              
+              <Tabs value={activeFileTab} onValueChange={setActiveFileTab}>
+                <TabsList className="w-full justify-start">
+                  {uploadedFiles.map((file, index) => (
+                    <TabsTrigger key={file.id} value={file.id} className="gap-2">
+                      <FileSpreadsheet className="w-3 h-3" />
+                      File {index + 1}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+                
+                {uploadedFiles.map((file) => (
+                  <TabsContent key={file.id} value={file.id} className="mt-4">
+                    <div className="p-4 rounded-lg border bg-white space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-sm truncate" title={file.fileName}>
+                          {file.fileName}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {file.rowCount.toLocaleString()} rows
+                        </span>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
+                        {(['entity', 'spend', 'leads', 'quotes', 'sales'] as const).map((field) => (
+                          <div key={field} className="flex items-center gap-2">
+                            <span className="text-muted-foreground capitalize">{field}:</span>
+                            <span className={cn(
+                              "font-mono truncate",
+                              file.mapping[field] ? "text-foreground" : "text-slate-400 italic"
+                            )}>
+                              {file.mapping[field] || 'not detected'}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </TabsContent>
+                ))}
+              </Tabs>
+            </section>
+          )}
 
           {/* Comparison Context */}
           <section className="space-y-4">

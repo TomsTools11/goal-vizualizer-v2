@@ -3,6 +3,27 @@
  */
 
 // ============================================================================
+// Multi-File Upload Types
+// ============================================================================
+
+/**
+ * Mode for handling multiple uploaded CSV files
+ */
+export type MultiFileMode = 'merge' | 'compare';
+
+/**
+ * Represents a single uploaded CSV file with its parsed data and mapping
+ */
+export interface UploadedFile {
+  id: string;
+  fileName: string;
+  headers: string[];
+  data: RawRow[];
+  mapping: Partial<ColumnMapping>;
+  rowCount: number;
+}
+
+// ============================================================================
 // Raw CSV Data Types
 // ============================================================================
 

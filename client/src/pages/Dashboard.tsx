@@ -5,13 +5,14 @@ import { Button } from '@/components/ui/button';
 import { Download, ArrowLeft, Share2, FileText, Loader2 } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
-import type { ReportConfig, ReportType, MetricId } from '@/types';
+import type { ReportConfig, ReportType, MetricId, MultiFileMode } from '@/types';
 import { normalizeData } from '@/utils/normalizeData';
-import { calculateAllMetrics } from '@/utils/calculateMetrics';
+import { calculateAllMetrics, calculateMultiFileMetrics, type MultiFileMetricsResult } from '@/utils/calculateMetrics';
 import { KPIDashboard, CompetitiveComparison, CampaignDeepDive } from '@/reports';
+import { FileComparisonReport } from '@/reports/FileComparisonReport';
 
 export default function Dashboard() {
-  const { data, mapping } = useData();
+  const { data, mapping, uploadedFiles, multiFileMode } = useData();
   const [, setLocation] = useLocation();
   const dashboardRef = useRef<HTMLDivElement>(null);
   const [isExporting, setIsExporting] = useState(false);
@@ -28,20 +29,34 @@ export default function Dashboard() {
       timeGrouping: undefined,
     };
   }, []);
+  
+  // Get multiFileMode from query params (fallback to context)
+  const effectiveMultiFileMode = useMemo<MultiFileMode>(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    return (searchParams.get('multiFileMode') as MultiFileMode) || multiFileMode || 'merge';
+  }, [multiFileMode]);
+  
+  const isCompareMode = effectiveMultiFileMode === 'compare' && uploadedFiles.length > 1;
 
   // Redirect if no data
-  if (data.length === 0) {
+  if (uploadedFiles.length === 0) {
     setLocation('/');
     return null;
   }
 
   // --- Data Processing Pipeline ---
-  // 1. Normalize raw CSV data using column mapping
-  // 2. Calculate all metrics (global + per-entity)
+  // For merge mode: combine all data and process as single dataset
+  // For compare mode: process each file separately
   const { global, entities } = useMemo(() => {
     const normalizedRows = normalizeData(data, mapping);
     return calculateAllMetrics(normalizedRows);
   }, [data, mapping]);
+  
+  // Multi-file metrics (for compare mode)
+  const fileMetrics = useMemo<MultiFileMetricsResult[]>(() => {
+    if (!isCompareMode) return [];
+    return calculateMultiFileMetrics(uploadedFiles);
+  }, [isCompareMode, uploadedFiles]);
 
   // --- Export Functionality ---
   const handleExportPDF = async () => {
@@ -142,6 +157,12 @@ export default function Dashboard() {
 
   // Render the appropriate report layout
   const renderReport = () => {
+    // Compare mode: use file comparison report
+    if (isCompareMode && fileMetrics.length > 0) {
+      return <FileComparisonReport config={config} fileMetrics={fileMetrics} />;
+    }
+    
+    // Standard single-dataset reports
     const props = { config, global, entities };
     
     switch (config.reportType) {
@@ -210,7 +231,9 @@ export default function Dashboard() {
         <footer className="bg-slate-100 border-t py-2 px-4 text-xs text-slate-500 print:hidden">
           <div className="container flex items-center justify-between">
             <span>
-              Report: {config.reportType} | Entities: {entities.length} | Metrics: {config.focusMetrics.join(', ')}
+              Report: {config.reportType} | Mode: {effectiveMultiFileMode} | 
+              {isCompareMode ? `Files: ${fileMetrics.length}` : `Entities: ${entities.length}`} | 
+              Metrics: {config.focusMetrics.join(', ')}
             </span>
             {config.highlightEntity && (
               <span>Highlighting: ★ {config.highlightEntity}</span>

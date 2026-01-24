@@ -4,7 +4,56 @@ This file tracks updates and changes made to the project across development sess
 
 ---
 
-## Session: January 24, 2026
+## Session: January 24, 2026 (Evening)
+
+### Multiple CSV Upload Support (Up to 3 Files)
+Implemented multi-file upload feature with two analysis modes:
+
+**Phase 1: Foundation**
+- Added `MultiFileMode` and `UploadedFile` types to `types/index.ts`
+- Refactored `DataContext` with multi-file state management:
+  - `uploadedFiles[]`, `multiFileMode`, `addFile()`, `removeFile()`, `updateFileMapping()`
+  - Backward-compatible computed values for `data`, `headers`, `mapping`
+
+**Phase 2: Upload UI**
+- Created `FileUploadList.tsx` - displays uploaded files with row count and remove button
+- Created `ModeSelector.tsx` - merge vs compare mode selection (shown with 2+ files)
+- Updated `CsvUploader.tsx` - multi-file drag-drop, duplicate detection, compact mode
+- Updated `Home.tsx` - integrated new components with flow control
+
+**Phase 3: Configuration Page**
+- Updated `ConfigureNew.tsx` with:
+  - Tabbed interface for per-file mapping in compare mode
+  - "Apply to All Files" button for compare mode
+  - Multi-file data summary display
+  - Passes `multiFileMode` to dashboard via query params
+
+**Phase 4: Dashboard & Reports**
+- Added `calculateMultiFileMetrics()` utility for per-file metric calculation
+- Updated `Dashboard.tsx` to handle both merge and compare modes
+- Created `FileComparisonReport.tsx` - side-by-side file comparison with:
+  - File summary cards with color coding
+  - Metric comparison table with "Best" indicators
+  - Trend indicators showing % change between files
+  - Per-file KPI breakdowns
+
+### Files Created
+- `client/src/components/FileUploadList.tsx`
+- `client/src/components/ModeSelector.tsx`
+- `client/src/reports/FileComparisonReport.tsx`
+
+### Files Modified
+- `client/src/types/index.ts`
+- `client/src/contexts/DataContext.tsx`
+- `client/src/components/CsvUploader.tsx`
+- `client/src/pages/Home.tsx`
+- `client/src/pages/ConfigureNew.tsx`
+- `client/src/pages/Dashboard.tsx`
+- `client/src/utils/calculateMetrics.ts`
+
+---
+
+## Session: January 24, 2026 (Morning)
 
 ### Vercel Deployment Setup
 - Added `vercel.json` with build configuration and SPA rewrites
@@ -20,6 +69,10 @@ This file tracks updates and changes made to the project across development sess
 - Modified `normalizeData.ts` to extract pre-calculated CPA values from CSV
 - Modified `calculateMetrics.ts` to use pre-calculated CPA values when available (falls back to calculated values otherwise)
 
+### Favicon Addition
+- Added favicon link to `client/index.html`
+- Using `goal-new-favicon.png` from `client/public/`
+
 ### Enhanced Column Detection
 - **Sales column**: Added patterns for `policy` (singular), `bound`, `bounds`, `bound hh`, `bound households`
 - **Premium column**: Added patterns for `policy rev`, `policy revenue`
@@ -27,6 +80,7 @@ This file tracks updates and changes made to the project across development sess
 
 ### Files Modified
 - `vercel.json` (created)
+- `client/index.html`
 - `vite.config.ts`
 - `package.json`
 - `pnpm-lock.yaml`

@@ -152,3 +152,37 @@ export function calculateAllMetrics(
   
   return { global, entities };
 }
+
+/**
+ * Result of multi-file metrics calculation
+ */
+export interface MultiFileMetricsResult {
+  fileName: string;
+  fileId: string;
+  global: EntityMetrics;
+  entities: EntityMetrics[];
+  rowCount: number;
+}
+
+/**
+ * Calculate metrics for multiple files separately (compare mode)
+ */
+import type { UploadedFile } from '@/types';
+import { normalizeData } from './normalizeData';
+
+export function calculateMultiFileMetrics(
+  files: UploadedFile[]
+): MultiFileMetricsResult[] {
+  return files.map(file => {
+    const normalizedRows = normalizeData(file.data, file.mapping);
+    const { global, entities } = calculateAllMetrics(normalizedRows);
+    
+    return {
+      fileName: file.fileName,
+      fileId: file.id,
+      global,
+      entities,
+      rowCount: file.rowCount,
+    };
+  });
+}
