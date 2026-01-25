@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, ArrowRight, Lightbulb, Check, FileSpreadsheet, Copy } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Lightbulb, Check, FileSpreadsheet, Copy, Home } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { METRIC_DEFINITIONS, canCalculateMetric } from '@/constants/metricDefinitions';
 import { autoDetectColumns } from '@/utils/columnMapping';
@@ -220,11 +220,16 @@ export default function ConfigureNew() {
     <div className="min-h-screen bg-slate-50 flex flex-col">
       <header className="bg-white border-b sticky top-0 z-50">
         <div className="container h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => setLocation('/')}>
-            <img src="/GOALlogo.svg" alt="GOAL" className="h-8 w-auto" />
-            <span className="text-sm font-medium text-muted-foreground ml-2 border-l pl-2">
-              Configure Report
-            </span>
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="icon" onClick={() => setLocation('/')} title="Home">
+              <Home className="w-5 h-5" />
+            </Button>
+            <div className="flex items-center gap-2">
+              <img src="/GOALlogo.svg" alt="GOAL" className="h-8 w-auto" />
+              <span className="text-sm font-medium text-muted-foreground ml-2 border-l pl-2">
+                Configure Report
+              </span>
+            </div>
           </div>
         </div>
       </header>

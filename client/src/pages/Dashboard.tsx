@@ -2,7 +2,7 @@ import React, { useMemo, useRef, useState } from 'react';
 import { useLocation } from 'wouter';
 import { useData } from '@/contexts/DataContext';
 import { Button } from '@/components/ui/button';
-import { Download, ArrowLeft, Share2, FileText, Loader2 } from 'lucide-react';
+import { Download, ArrowLeft, Share2, FileText, Loader2, Home } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import type { ReportConfig, ReportType, MetricId, MultiFileMode } from '@/types';
@@ -182,7 +182,10 @@ export default function Dashboard() {
       <header className="bg-white border-b sticky top-0 z-50 shadow-sm print:hidden">
         <div className="container h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => setLocation('/configure')}>
+            <Button variant="ghost" size="icon" onClick={() => setLocation('/')} title="Home">
+              <Home className="w-5 h-5" />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={() => setLocation('/configure')} title="Back to Configure">
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div className="flex items-center gap-2">
