@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useMemo, useCallback, ReactNode } from 'react';
 import type { RawRow, ColumnMapping, UploadedFile, MultiFileMode } from '@/types';
+import type { TransformationConfig, ValidationSummary } from '@/types/transformations';
 
 // Re-export for backwards compatibility
 export type DataRow = RawRow;
@@ -15,7 +16,11 @@ export interface DataContextType {
   addFile: (file: Omit<UploadedFile, 'id'>) => void;
   removeFile: (fileId: string) => void;
   updateFileMapping: (fileId: string, mapping: Partial<ColumnMapping>) => void;
-  
+
+  // Transformation management
+  updateFileTransformConfig: (fileId: string, config: TransformationConfig) => void;
+  updateFileValidation: (fileId: string, summary: ValidationSummary) => void;
+
   // Legacy single-file interface (computed for backward compatibility)
   data: RawRow[];
   setData: (data: RawRow[]) => void;
@@ -25,7 +30,11 @@ export interface DataContextType {
   setHeaders: (headers: string[]) => void;
   mapping: Partial<ColumnMapping>;
   setMapping: (mapping: Partial<ColumnMapping>) => void;
-  
+  transformConfig: TransformationConfig | undefined;
+  setTransformConfig: (config: TransformationConfig) => void;
+  validationSummary: ValidationSummary | undefined;
+  setValidationSummary: (summary: ValidationSummary) => void;
+
   resetData: () => void;
 }
 
@@ -59,8 +68,22 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   // Update mapping for a specific file
   const updateFileMapping = useCallback((fileId: string, mapping: Partial<ColumnMapping>) => {
-    setUploadedFiles(prev => prev.map(f => 
+    setUploadedFiles(prev => prev.map(f =>
       f.id === fileId ? { ...f, mapping } : f
+    ));
+  }, []);
+
+  // Update transformation config for a specific file
+  const updateFileTransformConfig = useCallback((fileId: string, config: TransformationConfig) => {
+    setUploadedFiles(prev => prev.map(f =>
+      f.id === fileId ? { ...f, transformConfig: config } : f
+    ));
+  }, []);
+
+  // Update validation summary for a specific file
+  const updateFileValidation = useCallback((fileId: string, summary: ValidationSummary) => {
+    setUploadedFiles(prev => prev.map(f =>
+      f.id === fileId ? { ...f, validationSummary: summary } : f
     ));
   }, []);
 
@@ -94,6 +117,16 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const mapping = useMemo(() => {
     if (uploadedFiles.length === 0) return {};
     return uploadedFiles[0]?.mapping ?? {};
+  }, [uploadedFiles]);
+
+  const transformConfig = useMemo(() => {
+    if (uploadedFiles.length === 0) return undefined;
+    return uploadedFiles[0]?.transformConfig;
+  }, [uploadedFiles]);
+
+  const validationSummary = useMemo(() => {
+    if (uploadedFiles.length === 0) return undefined;
+    return uploadedFiles[0]?.validationSummary;
   }, [uploadedFiles]);
 
   // Legacy setters that work with single-file mental model
@@ -134,6 +167,18 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   }, [uploadedFiles, updateFileMapping]);
 
+  const setTransformConfig = useCallback((config: TransformationConfig) => {
+    if (uploadedFiles.length > 0) {
+      updateFileTransformConfig(uploadedFiles[0].id, config);
+    }
+  }, [uploadedFiles, updateFileTransformConfig]);
+
+  const setValidationSummary = useCallback((summary: ValidationSummary) => {
+    if (uploadedFiles.length > 0) {
+      updateFileValidation(uploadedFiles[0].id, summary);
+    }
+  }, [uploadedFiles, updateFileValidation]);
+
   const resetData = useCallback(() => {
     setUploadedFiles([]);
     setMultiFileMode(null);
@@ -147,6 +192,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
     addFile,
     removeFile,
     updateFileMapping,
+    updateFileTransformConfig,
+    updateFileValidation,
     // Legacy API
     data,
     setData,
@@ -156,10 +203,16 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setHeaders,
     mapping,
     setMapping,
+    transformConfig,
+    setTransformConfig,
+    validationSummary,
+    setValidationSummary,
     resetData,
   }), [
     uploadedFiles, multiFileMode, addFile, removeFile, updateFileMapping,
-    data, setData, fileName, setFileName, headers, setHeaders, mapping, setMapping, resetData
+    updateFileTransformConfig, updateFileValidation,
+    data, setData, fileName, setFileName, headers, setHeaders, mapping, setMapping,
+    transformConfig, setTransformConfig, validationSummary, setValidationSummary, resetData
   ]);
 
   return (

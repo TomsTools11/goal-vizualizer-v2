@@ -16,7 +16,7 @@ export default function Home() {
     if (uploadedFiles.length === 1 && !multiFileMode) {
       setMultiFileMode('merge');
     }
-    setLocation('/configure');
+    setLocation('/map-columns');
   };
 
   // Calculate total rows across all files
@@ -74,12 +74,12 @@ export default function Home() {
                     </div>
                   </div>
                   
-                  <Button 
-                    size="lg" 
+                  <Button
+                    size="lg"
                     onClick={handleContinue}
                     className="w-full md:w-auto gap-2 shadow-lg shadow-primary/20"
                   >
-                    Configure Dashboard
+                    Map Columns
                     <ArrowRight className="w-4 h-4" />
                   </Button>
                 </div>

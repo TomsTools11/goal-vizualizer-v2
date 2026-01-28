@@ -93,7 +93,7 @@ export function ModeSelector({ onContinue }: ModeSelectorProps) {
           disabled={!multiFileMode}
           className="gap-2 shadow-lg shadow-primary/20"
         >
-          Continue to Configure
+          Continue to Map Columns
           <ArrowRight className="w-4 h-4" />
         </Button>
       </div>

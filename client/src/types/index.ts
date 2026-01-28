@@ -2,6 +2,8 @@
  * Core type definitions for GOAL Visuals Builder
  */
 
+import type { TransformationConfig, ValidationSummary } from './transformations';
+
 // ============================================================================
 // Multi-File Upload Types
 // ============================================================================
@@ -21,6 +23,8 @@ export interface UploadedFile {
   data: RawRow[];
   mapping: Partial<ColumnMapping>;
   rowCount: number;
+  transformConfig?: TransformationConfig;
+  validationSummary?: ValidationSummary;
 }
 
 // ============================================================================
