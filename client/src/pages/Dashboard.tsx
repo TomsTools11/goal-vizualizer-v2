@@ -61,14 +61,18 @@ export default function Dashboard() {
   // --- Export Functionality ---
   const handleExportPDF = async () => {
     if (!dashboardRef.current || isExporting) return;
-    
+
     setIsExporting(true);
     try {
+      // Wait for images and charts to fully render before capture
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
       const canvas = await html2canvas(dashboardRef.current, {
         scale: 2, // High resolution
         backgroundColor: '#F8FAFC',
         useCORS: true,
         logging: false,
+        imageTimeout: 5000,
       });
       
       // PDF page dimensions (Letter size in pixels at 96 DPI, scaled by 2 for high-res)
@@ -143,6 +147,7 @@ export default function Dashboard() {
       pdf.save(`GOAL-${reportTypeName}-${timestamp}.pdf`);
     } catch (err) {
       console.error('PDF export failed:', err);
+      alert('PDF export failed. Please try again or check the browser console for details.');
     } finally {
       setIsExporting(false);
     }
@@ -189,7 +194,7 @@ export default function Dashboard() {
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div className="flex items-center gap-2">
-              <img src="/GOALlogo.svg" alt="GOAL" className="h-8 w-auto" />
+              <img src="/goal-logo-dark.png" alt="GOAL" className="h-8 w-auto" />
               <span className="text-sm font-medium text-muted-foreground ml-2 border-l pl-2 hidden md:inline-block">
                 {reportTitle}
               </span>

@@ -225,7 +225,7 @@ export default function ConfigureNew() {
               <Home className="w-5 h-5" />
             </Button>
             <div className="flex items-center gap-2">
-              <img src="/GOALlogo.svg" alt="GOAL" className="h-8 w-auto" />
+              <img src="/goal-logo-dark.png" alt="GOAL" className="h-8 w-auto" />
               <span className="text-sm font-medium text-muted-foreground ml-2 border-l pl-2">
                 Configure Report
               </span>
