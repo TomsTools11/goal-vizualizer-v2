@@ -116,9 +116,15 @@ function parseAutoDate(value: string): Date | null {
     if (result) return result;
   }
 
-  // Fall back to native Date parsing
-  const native = new Date(value);
-  return isNaN(native.getTime()) ? null : native;
+  // Fall back to native Date parsing, but only for strings that look like
+  // plausible date strings (contain separators like /, -, or spaces).
+  // Plain numbers like "185" or "2" should NOT be parsed as dates.
+  if (/[\/\-\s]/.test(value) || /[a-zA-Z]/.test(value)) {
+    const native = new Date(value);
+    return isNaN(native.getTime()) ? null : native;
+  }
+
+  return null;
 }
 
 /**
